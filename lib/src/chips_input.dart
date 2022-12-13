@@ -54,7 +54,8 @@ class ChipsInput<T> extends StatefulWidget {
     this.multichoiceCharSeparator,
     this.keyValueEnabled = false,
   })  : assert(maxChips == null || initialValue.length <= maxChips),
-        assert(!keyValueEnabled || (keyValueEnabled && multichoiceCharSeparator != null)),
+        assert(!keyValueEnabled ||
+            (keyValueEnabled && multichoiceCharSeparator != null)),
         super(key: key);
 
   final InputDecoration decoration;
@@ -253,14 +254,21 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
 
   void selectSuggestion(dynamic data) {
     if (!_hasReachedMaxChips) {
-      if(!widget.keyValueEnabled || widget.multichoiceCharSeparator == null || (widget.multichoiceCharSeparator != null && data.toString().endsWith(widget.multichoiceCharSeparator!))) {
+      if (!widget.keyValueEnabled ||
+          widget.multichoiceCharSeparator == null ||
+          (widget.multichoiceCharSeparator != null &&
+              data.toString().endsWith(widget.multichoiceCharSeparator!))) {
         _addChip(data);
-      } else if(widget.keyValueEnabled && data.toString().contains(':') && data.toString().endsWith(widget.multichoiceCharSeparator!)) {
+      } else if (widget.keyValueEnabled &&
+          data.toString().contains(':') &&
+          data.toString().endsWith(widget.multichoiceCharSeparator!)) {
         _addChip(data);
       }
       _updateTextInputState(
         replaceText: true,
-        putText: widget.keyValueEnabled && widget.multichoiceCharSeparator != null && !data.toString().endsWith(widget.multichoiceCharSeparator!)
+        putText: widget.keyValueEnabled &&
+                widget.multichoiceCharSeparator != null &&
+                !data.toString().endsWith(widget.multichoiceCharSeparator!)
             ? '${data}: '
             : '',
       );
@@ -274,7 +282,7 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
   }
 
   void _addChip(dynamic data) {
-    if(data is String && widget.multichoiceCharSeparator != null) {
+    if (data is String && widget.multichoiceCharSeparator != null) {
       data = data.toString().replaceFirst(widget.multichoiceCharSeparator!, '');
     }
     setState(() => _chips.add(data));
@@ -338,7 +346,8 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
   void updateEditingValue(TextEditingValue value) {
     //print("updateEditingValue FIRED with ${value.text}");
     // _receivedRemoteTextEditingValue = value;
-    if(widget.multichoiceCharSeparator != null && value.text.endsWith(widget.multichoiceCharSeparator!)) {
+    if (widget.multichoiceCharSeparator != null &&
+        value.text.endsWith(widget.multichoiceCharSeparator!)) {
       selectSuggestion(value.text);
       return;
     }
@@ -360,7 +369,9 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
       } else {
         _updateTextInputState();
       }
-      if(!widget.keyValueEnabled || !(widget.keyValueEnabled && _value.normalCharactersText.contains(':'))) {
+      if (!widget.keyValueEnabled ||
+          !(widget.keyValueEnabled &&
+              _value.normalCharactersText.contains(':'))) {
         _onSearchChanged(_value.normalCharactersText);
       }
     }
