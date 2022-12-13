@@ -51,7 +51,10 @@ class ChipsInput<T> extends StatefulWidget {
     this.allowChipEditing = false,
     this.focusNode,
     this.initialSuggestions,
+    this.multichoiceCharSeparator,
+    this.keyValueEnabled = false,
   })  : assert(maxChips == null || initialValue.length <= maxChips),
+        assert(!keyValueEnabled || (keyValueEnabled && multichoiceCharSeparator != null)),
         super(key: key);
 
   final InputDecoration decoration;
@@ -75,6 +78,8 @@ class ChipsInput<T> extends StatefulWidget {
   final bool allowChipEditing;
   final FocusNode? focusNode;
   final List<T>? initialSuggestions;
+  final String? multichoiceCharSeparator;
+  final bool keyValueEnabled;
 
   // final Color cursorColor;
 
@@ -246,20 +251,36 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
     );
   }
 
-  void selectSuggestion(T data) {
+  void selectSuggestion(dynamic data) {
     if (!_hasReachedMaxChips) {
-      setState(() => _chips = _chips..add(data));
-      if (widget.allowChipEditing) {
-        final enteredText = _value.normalCharactersText;
-        if (enteredText.isNotEmpty) _enteredTexts[data] = enteredText;
+      if(!widget.keyValueEnabled || widget.multichoiceCharSeparator == null || (widget.multichoiceCharSeparator != null && data.toString().endsWith(widget.multichoiceCharSeparator!))) {
+        _addChip(data);
+      } else if(widget.keyValueEnabled && data.toString().contains(':') && data.toString().endsWith(widget.multichoiceCharSeparator!)) {
+        _addChip(data);
       }
-      _updateTextInputState(replaceText: true);
+      _updateTextInputState(
+        replaceText: true,
+        putText: widget.keyValueEnabled && widget.multichoiceCharSeparator != null && !data.toString().endsWith(widget.multichoiceCharSeparator!)
+            ? '${data}: '
+            : '',
+      );
       setState(() => _suggestions = null);
       _suggestionsStreamController.add(_suggestions);
       if (_hasReachedMaxChips) _suggestionsBoxController.close();
       widget.onChanged(_chips.toList(growable: false));
     } else {
       _suggestionsBoxController.close();
+    }
+  }
+
+  void _addChip(dynamic data) {
+    if(data is String && widget.multichoiceCharSeparator != null) {
+      data = data.toString().replaceFirst(widget.multichoiceCharSeparator!, '');
+    }
+    setState(() => _chips.add(data));
+    if (widget.allowChipEditing) {
+      final enteredText = _value.normalCharactersText;
+      if (enteredText.isNotEmpty) _enteredTexts[data] = enteredText;
     }
   }
 
@@ -317,6 +338,10 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
   void updateEditingValue(TextEditingValue value) {
     //print("updateEditingValue FIRED with ${value.text}");
     // _receivedRemoteTextEditingValue = value;
+    if(widget.multichoiceCharSeparator != null && value.text.endsWith(widget.multichoiceCharSeparator!)) {
+      selectSuggestion(value.text);
+      return;
+    }
     final oldTextEditingValue = _value;
     if (value.text != oldTextEditingValue.text) {
       setState(() => _value = value);
@@ -335,7 +360,9 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
       } else {
         _updateTextInputState();
       }
-      _onSearchChanged(_value.normalCharactersText);
+      if(!widget.keyValueEnabled || !(widget.keyValueEnabled && _value.normalCharactersText.contains(':'))) {
+        _onSearchChanged(_value.normalCharactersText);
+      }
     }
   }
 

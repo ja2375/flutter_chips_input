@@ -32,33 +32,6 @@ class MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    const mockResults = <AppProfile>[
-      AppProfile('John Doe', 'jdoe@flutter.io',
-          'https://d2gg9evh47fn9z.cloudfront.net/800px_COLOURBOX4057996.jpg'),
-      AppProfile('Paul', 'paul@google.com',
-          'https://mbtskoudsalg.com/images/person-stock-image-png.png'),
-      AppProfile('Fred', 'fred@google.com',
-          'https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png'),
-      AppProfile('Brian', 'brian@flutter.io',
-          'https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png'),
-      AppProfile('John', 'john@flutter.io',
-          'https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png'),
-      AppProfile('Thomas', 'thomas@flutter.io',
-          'https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png'),
-      AppProfile('Nelly', 'nelly@flutter.io',
-          'https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png'),
-      AppProfile('Marie', 'marie@flutter.io',
-          'https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png'),
-      AppProfile('Charlie', 'charlie@flutter.io',
-          'https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png'),
-      AppProfile('Diana', 'diana@flutter.io',
-          'https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png'),
-      AppProfile('Ernie', 'ernie@flutter.io',
-          'https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png'),
-      AppProfile('Gina', 'fred@flutter.io',
-          'https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png'),
-    ];
-
     return Scaffold(
       appBar: AppBar(title: const Text('Flutter Chips Input Example')),
       resizeToAvoidBottomInset: false,
@@ -67,12 +40,8 @@ class MyHomePageState extends State<MyHomePage> {
         child: SingleChildScrollView(
           child: Column(
             children: <Widget>[
-              ChipsInput(
+              ChipsInput<String>(
                 key: _chipKey,
-                /*initialValue: [
-                  AppProfile('John Doe', 'jdoe@flutter.io',
-                      'https://d2gg9evh47fn9z.cloudfront.net/800px_COLOURBOX4057996.jpg'),
-                ],*/
                 // autofocus: true,
                 // allowChipEditing: true,
                 keyboardAppearance: Brightness.dark,
@@ -89,36 +58,17 @@ class MyHomePageState extends State<MyHomePage> {
                   // errorText: field.errorText,
                 ),
                 findSuggestions: (String query) {
-                  // print("Query: '$query'");
-                  if (query.isNotEmpty) {
-                    var lowercaseQuery = query.toLowerCase();
-                    return mockResults.where((profile) {
-                      return profile.name
-                              .toLowerCase()
-                              .contains(query.toLowerCase()) ||
-                          profile.email
-                              .toLowerCase()
-                              .contains(query.toLowerCase());
-                    }).toList(growable: false)
-                      ..sort((a, b) => a.name
-                          .toLowerCase()
-                          .indexOf(lowercaseQuery)
-                          .compareTo(
-                              b.name.toLowerCase().indexOf(lowercaseQuery)));
-                  }
-                  // return <AppProfile>[];
-                  return mockResults;
+                  return ['Hola', 'Test'];
                 },
                 onChanged: (data) {
                   // print(data);
                 },
+                keyValueEnabled: true,
+                multichoiceCharSeparator: ',',
                 chipBuilder: (context, state, dynamic profile) {
                   return InputChip(
                     key: ObjectKey(profile),
-                    label: Text(profile.name),
-                    avatar: CircleAvatar(
-                      backgroundImage: NetworkImage(profile.imageUrl),
-                    ),
+                    label: Text(profile),
                     onDeleted: () => state.deleteChip(profile),
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   );
@@ -126,11 +76,7 @@ class MyHomePageState extends State<MyHomePage> {
                 suggestionBuilder: (context, state, dynamic profile) {
                   return ListTile(
                     key: ObjectKey(profile),
-                    leading: CircleAvatar(
-                      backgroundImage: NetworkImage(profile.imageUrl),
-                    ),
-                    title: Text(profile.name),
-                    subtitle: Text(profile.email),
+                    title: Text(profile),
                     onTap: () => state.selectSuggestion(profile),
                   );
                 },
