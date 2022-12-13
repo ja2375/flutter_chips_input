@@ -11,6 +11,7 @@ typedef ChipsInputSuggestions<T> = FutureOr<List<T>> Function(String query);
 typedef ChipSelected<T> = void Function(T data, bool selected);
 typedef ChipsBuilder<T> = Widget Function(
     BuildContext context, ChipsInputState<T> state, T data);
+typedef OnEditingCompleteCallback = void Function(List<String> chipValues);
 
 const kObjectReplacementChar = 0xFFFD;
 
@@ -53,6 +54,7 @@ class ChipsInput<T> extends StatefulWidget {
     this.initialSuggestions,
     this.multichoiceCharSeparator,
     this.keyValueEnabled = false,
+    this.onEditingComplete,
   })  : assert(maxChips == null || initialValue.length <= maxChips),
         assert(!keyValueEnabled ||
             (keyValueEnabled && multichoiceCharSeparator != null)),
@@ -81,6 +83,7 @@ class ChipsInput<T> extends StatefulWidget {
   final List<T>? initialSuggestions;
   final String? multichoiceCharSeparator;
   final bool keyValueEnabled;
+  final OnEditingCompleteCallback? onEditingComplete;
 
   // final Color cursorColor;
 
@@ -417,6 +420,10 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
           selectSuggestion(_suggestions!.first as T);
         } else {
           _effectiveFocusNode.unfocus();
+        }
+        if (widget.onEditingComplete != null) {
+          var chipValues = _chips.map((e) => e.toString()).toList();
+          widget.onEditingComplete!(chipValues);
         }
         break;
       default:

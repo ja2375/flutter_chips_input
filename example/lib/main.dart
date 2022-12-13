@@ -58,13 +58,16 @@ class MyHomePageState extends State<MyHomePage> {
                   // errorText: field.errorText,
                 ),
                 findSuggestions: (String query) {
-                  return ['Hola', 'Test'];
+                  return ['Test1', 'Test2'];
                 },
                 onChanged: (data) {
                   // print(data);
                 },
                 keyValueEnabled: true,
                 multichoiceCharSeparator: ',',
+                onEditingComplete: (chips) {
+                  print(chips);
+                },
                 chipBuilder: (context, state, dynamic profile) {
                   return InputChip(
                     key: ObjectKey(profile),
