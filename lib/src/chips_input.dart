@@ -285,11 +285,12 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
     if (data is String && widget.multichoiceCharSeparator != null) {
       data = data.toString().replaceFirst(widget.multichoiceCharSeparator!, '');
     }
+
     /// Remove charCode 65533 that gets stragely
     /// generated in some cases and results in a non-printable
     /// charater when parsed to string, as it is not UTF-8
     /// encodable.
-    if(data.toString().codeUnits.contains(65533)) {
+    if (data.toString().codeUnits.contains(65533)) {
       var codeUnits = List<int>.from(data.toString().codeUnits);
       codeUnits.removeWhere((element) => element == 65533);
       data = String.fromCharCodes(codeUnits);
