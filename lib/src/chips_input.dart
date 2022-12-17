@@ -293,9 +293,9 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
     /// generated in some cases and results in a non-printable
     /// charater when parsed to string, as it is not UTF-8
     /// encodable.
-    if (data.toString().codeUnits.contains(65533)) {
+    if (data.toString().codeUnits.contains(kObjectReplacementChar)) {
       var codeUnits = List<int>.from(data.toString().codeUnits);
-      codeUnits.removeWhere((element) => element == 65533);
+      codeUnits.removeWhere((element) => element == kObjectReplacementChar);
       data = String.fromCharCodes(codeUnits);
     }
     setState(() => _chips.add(data));
@@ -416,10 +416,27 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
       case TextInputAction.go:
       case TextInputAction.send:
       case TextInputAction.search:
-        if (_suggestions?.isNotEmpty ?? false) {
-          selectSuggestion(_suggestions!.first as T);
+        if(!widget.keyValueEnabled) {
+          if (_suggestions?.isNotEmpty ?? false) {
+            selectSuggestion(_suggestions!.first as T);
+          } else {
+            _effectiveFocusNode.unfocus();
+          }
         } else {
-          _effectiveFocusNode.unfocus();
+          /// Add a trailing comma in order for [selectSuggestion]
+          /// to actually add the chip & strip out remaining [kObjectReplacementChar].
+          var currentText = '${currentTextEditingValue.text},';
+          final codeUnits = List<int>.from(currentText.codeUnits);
+          if(codeUnits.contains(kObjectReplacementChar)) {
+            codeUnits.removeWhere((e) => e == kObjectReplacementChar);
+            currentText = String.fromCharCodes(codeUnits);
+          }
+          /// If there's text (currentText is not empty),
+          /// add the chip.
+          /// This should prevent the addition of empty chips.
+          if(currentText != ',') {
+            selectSuggestion(currentText);
+          }
         }
         if (widget.onEditingComplete != null) {
           var chipValues = _chips.map((e) => e.toString()).toList();
