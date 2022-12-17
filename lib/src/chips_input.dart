@@ -416,7 +416,7 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
       case TextInputAction.go:
       case TextInputAction.send:
       case TextInputAction.search:
-        if(!widget.keyValueEnabled) {
+        if (!widget.keyValueEnabled) {
           if (_suggestions?.isNotEmpty ?? false) {
             selectSuggestion(_suggestions!.first as T);
           } else {
@@ -427,14 +427,15 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
           /// to actually add the chip & strip out remaining [kObjectReplacementChar].
           var currentText = '${currentTextEditingValue.text},';
           final codeUnits = List<int>.from(currentText.codeUnits);
-          if(codeUnits.contains(kObjectReplacementChar)) {
+          if (codeUnits.contains(kObjectReplacementChar)) {
             codeUnits.removeWhere((e) => e == kObjectReplacementChar);
             currentText = String.fromCharCodes(codeUnits);
           }
+
           /// If there's text (currentText is not empty),
           /// add the chip.
           /// This should prevent the addition of empty chips.
-          if(currentText != ',') {
+          if (currentText != ',') {
             selectSuggestion(currentText);
           }
         }
