@@ -68,7 +68,7 @@ class MyHomePageState extends State<MyHomePage> {
                 onEditingComplete: (chips) {
                   print(chips);
                 },
-                chipBuilder: (context, state, dynamic profile) {
+                chipBuilder: (context, state, profile, _) {
                   return InputChip(
                     key: ObjectKey(profile),
                     label: Text(profile),
@@ -76,10 +76,11 @@ class MyHomePageState extends State<MyHomePage> {
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   );
                 },
-                suggestionBuilder: (context, state, dynamic profile) {
+                suggestionBuilder: (context, state, profile, selected) {
                   return ListTile(
                     key: ObjectKey(profile),
                     title: Text(profile),
+                    selected: selected,
                     onTap: () => state.selectSuggestion(profile),
                   );
                 },

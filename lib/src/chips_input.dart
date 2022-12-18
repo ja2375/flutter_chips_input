@@ -10,7 +10,7 @@ import 'text_cursor.dart';
 typedef ChipsInputSuggestions<T> = FutureOr<List<T>> Function(String query);
 typedef ChipSelected<T> = void Function(T data, bool selected);
 typedef ChipsBuilder<T> = Widget Function(
-    BuildContext context, ChipsInputState<T> state, T data);
+    BuildContext context, ChipsInputState<T> state, T data, bool selected);
 typedef OnEditingCompleteCallback = void Function(List<String> chipValues);
 
 const kObjectReplacementChar = 0xFFFD;
@@ -105,6 +105,7 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
   late SuggestionsBoxController _suggestionsBoxController;
   final _layerLink = LayerLink();
   final Map<T?, String> _enteredTexts = <T, String>{};
+  int? _selectedSuggestionIndex;
 
   TextInputConfiguration get textInputConfiguration => TextInputConfiguration(
         inputType: widget.inputType,
@@ -121,6 +122,8 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
 
   bool get _hasReachedMaxChips =>
       widget.maxChips != null && _chips.length >= widget.maxChips!;
+
+  int? get selectedSuggestionIndex => _selectedSuggestionIndex;
 
   FocusNode? _focusNode;
   FocusNode get _effectiveFocusNode =>
@@ -163,6 +166,9 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
   }
 
   void _handleFocusChanged() {
+    if(_selectedSuggestionIndex != null) {
+      _selectedSuggestionIndex = null;
+    }
     if (_effectiveFocusNode.hasFocus) {
       _openInputConnection();
       _suggestionsBoxController.open();
@@ -223,11 +229,7 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
                     itemCount: snapshot.data!.length,
                     itemBuilder: (BuildContext context, int index) {
                       return _suggestions != null
-                          ? widget.suggestionBuilder(
-                              context,
-                              this,
-                              _suggestions![index] as T,
-                            )
+                          ? widget.suggestionBuilder(context, this, _suggestions![index] as T, _selectedSuggestionIndex == index)
                           : Container();
                     },
                   ),
@@ -256,6 +258,9 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
   }
 
   void selectSuggestion(dynamic data) {
+    if(_selectedSuggestionIndex != null) {
+      _selectedSuggestionIndex = null;
+    }
     if (!_hasReachedMaxChips) {
       if (!widget.keyValueEnabled ||
           widget.multichoiceCharSeparator == null ||
@@ -418,7 +423,9 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
       case TextInputAction.search:
         if (!widget.keyValueEnabled) {
           if (_suggestions?.isNotEmpty ?? false) {
-            selectSuggestion(_suggestions!.first as T);
+            if(_selectedSuggestionIndex == null) {
+              selectSuggestion(_suggestions!.first as T);
+            }
           } else {
             _effectiveFocusNode.unfocus();
           }
@@ -436,7 +443,9 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
           /// add the chip.
           /// This should prevent the addition of empty chips.
           if (currentText != ',') {
-            selectSuggestion(currentText);
+            if(_selectedSuggestionIndex == null) {
+              selectSuggestion(currentText);
+            }
           }
         }
         if (widget.onEditingComplete != null) {
@@ -490,7 +499,7 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
   Widget build(BuildContext context) {
     _nodeAttachment.reparent();
     final chipsChildren = _chips
-        .map<Widget>((data) => widget.chipBuilder(context, this, data))
+        .map<Widget>((data) => widget.chipBuilder(context, this, data, false))
         .toList();
 
     final theme = Theme.of(context);
@@ -521,38 +530,83 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
       ),
     );
 
-    return NotificationListener<SizeChangedLayoutNotification>(
-      onNotification: (SizeChangedLayoutNotification val) {
-        WidgetsBinding.instance.addPostFrameCallback((_) async {
-          _suggestionsBoxController.overlayEntry?.markNeedsBuild();
-        });
-        return true;
+    return RawKeyboardListener(
+      focusNode: _focusNode ?? FocusNode(),
+      onKey: (event) {
+        final str = currentTextEditingValue.text;
+        if(event.runtimeType == RawKeyDownEvent) {
+          if(event.logicalKey == LogicalKeyboardKey.backspace && str.isNotEmpty) {
+            final sd = str.substring(0, str.length - 1);
+            updateEditingValue(TextEditingValue(
+                text: sd, selection: TextSelection.collapsed(offset: sd.length)));
+          }
+          if(_suggestions?.isNotEmpty ?? false) {
+            if(event.logicalKey == LogicalKeyboardKey.arrowDown) {
+              if(_selectedSuggestionIndex == null) {
+                _selectedSuggestionIndex = 0;
+              } else {
+                if(_selectedSuggestionIndex! + 1 < _suggestions!.length) {
+                  _selectedSuggestionIndex = _selectedSuggestionIndex! + 1;
+                } else {
+                  _selectedSuggestionIndex = 0;
+                }
+              }
+              _suggestionsBoxController.overlayEntry!.markNeedsBuild();
+            } else if(event.logicalKey == LogicalKeyboardKey.arrowUp) {
+              if(_selectedSuggestionIndex == null) {
+                _selectedSuggestionIndex = _suggestions!.length - 1;
+              } else {
+                if(_selectedSuggestionIndex! - 1 > 0) {
+                  _selectedSuggestionIndex = _selectedSuggestionIndex! - 1;
+                } else {
+                  _selectedSuggestionIndex = _suggestions!.length - 1;
+                }
+              }
+              _suggestionsBoxController.overlayEntry!.markNeedsBuild();
+            } else if(event.logicalKey == LogicalKeyboardKey.enter) {
+              if(_selectedSuggestionIndex != null) {
+                selectSuggestion(_suggestions![_selectedSuggestionIndex!]);
+              }
+            }
+          }
+        }
       },
-      child: SizeChangedLayoutNotifier(
-        child: Column(
-          children: <Widget>[
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () {
-                requestKeyboard();
-              },
-              child: InputDecorator(
-                decoration: widget.decoration,
-                isFocused: _effectiveFocusNode.hasFocus,
-                isEmpty: _value.text.isEmpty && _chips.isEmpty,
-                child: Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 4.0,
-                  runSpacing: 4.0,
-                  children: chipsChildren,
+      child: NotificationListener<SizeChangedLayoutNotification>(
+        onNotification: (SizeChangedLayoutNotification val) {
+          if(_selectedSuggestionIndex != null) {
+            _selectedSuggestionIndex = null;
+          }
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            _suggestionsBoxController.overlayEntry?.markNeedsBuild();
+          });
+          return true;
+        },
+        child: SizeChangedLayoutNotifier(
+          child: Column(
+            children: <Widget>[
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  requestKeyboard();
+                },
+                child: InputDecorator(
+                  decoration: widget.decoration,
+                  isFocused: _effectiveFocusNode.hasFocus,
+                  isEmpty: _value.text.isEmpty && _chips.isEmpty,
+                  child: Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 4.0,
+                    runSpacing: 4.0,
+                    children: chipsChildren,
+                  ),
                 ),
               ),
-            ),
-            CompositedTransformTarget(
-              link: _layerLink,
-              child: Container(),
-            ),
-          ],
+              CompositedTransformTarget(
+                link: _layerLink,
+                child: Container(),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -25,7 +25,7 @@ void main() {
             onChanged: (contacts) {
               debugPrint(contacts.toString());
             },
-            chipBuilder: (context, state, contact) {
+            chipBuilder: (context, state, contact, _) {
               return InputChip(
                 key: ValueKey(contact),
                 label: Text(contact),
@@ -33,10 +33,11 @@ void main() {
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               );
             },
-            suggestionBuilder: (context, state, contact) {
+            suggestionBuilder: (context, state, contact, selected) {
               return ListTile(
                 key: ValueKey(contact),
                 title: Text(contact),
+                selected: selected,
                 onTap: () => state.selectSuggestion(contact),
               );
             },
