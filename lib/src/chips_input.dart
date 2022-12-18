@@ -166,7 +166,7 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
   }
 
   void _handleFocusChanged() {
-    if(_selectedSuggestionIndex != null) {
+    if (_selectedSuggestionIndex != null) {
       _selectedSuggestionIndex = null;
     }
     if (_effectiveFocusNode.hasFocus) {
@@ -229,7 +229,11 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
                     itemCount: snapshot.data!.length,
                     itemBuilder: (BuildContext context, int index) {
                       return _suggestions != null
-                          ? widget.suggestionBuilder(context, this, _suggestions![index] as T, _selectedSuggestionIndex == index)
+                          ? widget.suggestionBuilder(
+                              context,
+                              this,
+                              _suggestions![index] as T,
+                              _selectedSuggestionIndex == index)
                           : Container();
                     },
                   ),
@@ -258,7 +262,7 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
   }
 
   void selectSuggestion(dynamic data) {
-    if(_selectedSuggestionIndex != null) {
+    if (_selectedSuggestionIndex != null) {
       _selectedSuggestionIndex = null;
     }
     if (!_hasReachedMaxChips) {
@@ -423,7 +427,7 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
       case TextInputAction.search:
         if (!widget.keyValueEnabled) {
           if (_suggestions?.isNotEmpty ?? false) {
-            if(_selectedSuggestionIndex == null) {
+            if (_selectedSuggestionIndex == null) {
               selectSuggestion(_suggestions!.first as T);
             }
           } else {
@@ -443,7 +447,7 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
           /// add the chip.
           /// This should prevent the addition of empty chips.
           if (currentText != ',') {
-            if(_selectedSuggestionIndex == null) {
+            if (_selectedSuggestionIndex == null) {
               selectSuggestion(currentText);
             }
           }
@@ -534,37 +538,39 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
       focusNode: _focusNode ?? FocusNode(),
       onKey: (event) {
         final str = currentTextEditingValue.text;
-        if(event.runtimeType == RawKeyDownEvent) {
-          if(event.logicalKey == LogicalKeyboardKey.backspace && str.isNotEmpty) {
+        if (event.runtimeType == RawKeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.backspace &&
+              str.isNotEmpty) {
             final sd = str.substring(0, str.length - 1);
             updateEditingValue(TextEditingValue(
-                text: sd, selection: TextSelection.collapsed(offset: sd.length)));
+                text: sd,
+                selection: TextSelection.collapsed(offset: sd.length)));
           }
-          if(_suggestions?.isNotEmpty ?? false) {
-            if(event.logicalKey == LogicalKeyboardKey.arrowDown) {
-              if(_selectedSuggestionIndex == null) {
+          if (_suggestions?.isNotEmpty ?? false) {
+            if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+              if (_selectedSuggestionIndex == null) {
                 _selectedSuggestionIndex = 0;
               } else {
-                if(_selectedSuggestionIndex! + 1 < _suggestions!.length) {
+                if (_selectedSuggestionIndex! + 1 < _suggestions!.length) {
                   _selectedSuggestionIndex = _selectedSuggestionIndex! + 1;
                 } else {
                   _selectedSuggestionIndex = 0;
                 }
               }
               _suggestionsBoxController.overlayEntry!.markNeedsBuild();
-            } else if(event.logicalKey == LogicalKeyboardKey.arrowUp) {
-              if(_selectedSuggestionIndex == null) {
+            } else if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+              if (_selectedSuggestionIndex == null) {
                 _selectedSuggestionIndex = _suggestions!.length - 1;
               } else {
-                if(_selectedSuggestionIndex! - 1 > 0) {
+                if (_selectedSuggestionIndex! - 1 > 0) {
                   _selectedSuggestionIndex = _selectedSuggestionIndex! - 1;
                 } else {
                   _selectedSuggestionIndex = _suggestions!.length - 1;
                 }
               }
               _suggestionsBoxController.overlayEntry!.markNeedsBuild();
-            } else if(event.logicalKey == LogicalKeyboardKey.enter) {
-              if(_selectedSuggestionIndex != null) {
+            } else if (event.logicalKey == LogicalKeyboardKey.enter) {
+              if (_selectedSuggestionIndex != null) {
                 selectSuggestion(_suggestions![_selectedSuggestionIndex!]);
               }
             }
@@ -573,7 +579,7 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
       },
       child: NotificationListener<SizeChangedLayoutNotification>(
         onNotification: (SizeChangedLayoutNotification val) {
-          if(_selectedSuggestionIndex != null) {
+          if (_selectedSuggestionIndex != null) {
             _selectedSuggestionIndex = null;
           }
           WidgetsBinding.instance.addPostFrameCallback((_) async {
